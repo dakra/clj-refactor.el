@@ -1935,7 +1935,8 @@ of a reader conditional inside of a cljc file."
                 ((cljr--cljs-file-p)
                  "cljs")
                 ((cljr--clj-file-p)
-                 "clj"))
+                 "clj")
+                (t "cljc"))
           (when-let* ((context (when cljc?
                                  (cljr--reader-conditional-context))))
             (string-remove-prefix ":" context)))))
