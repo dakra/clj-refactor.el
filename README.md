@@ -34,7 +34,6 @@ If you are an IDO user, you will get better completions by installing the [`ido-
 
 (defun my-clojure-mode-hook ()
     (clj-refactor-mode 1)
-    (yas-minor-mode 1) ; for adding require/use/import statements
     ;; This choice of keybinding leaves cider-macroexpand-1 unbound
     (cljr-add-keybindings-with-prefix "C-c C-m"))
 
@@ -168,8 +167,6 @@ versions are deprecated:
 
 clj-refactor               | CIDER
 ---------------------------|------------------------
-`cljr-add-require-to-ns`   | `cider-ns-add-require`
-`cljr-add-import-to-ns`    | `cider-ns-add-import`
 `cljr-add-missing-libspec` | `cider-ns-add-missing`
 `cljr-slash`               | `cider-ns-magic-requires`
 `cljr-clean-ns`            | `cider-ns-clean`

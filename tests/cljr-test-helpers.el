@@ -20,7 +20,6 @@
 
 (require 'cl-lib)
 (require 'paredit)
-(require 'yasnippet)
 (require 'clojure-mode)
 (require 'clj-refactor)
 
@@ -56,8 +55,7 @@ With WITH-POINT non-nil, mark where point is with a `|'."
 
 (defun cljr-test--enable-modes ()
   "Turn on in the current buffer what a user of clj-refactor has on."
-  (clj-refactor-mode 1)
-  (yas-minor-mode 1))
+  (clj-refactor-mode 1))
 
 ;; The setup the README suggests, so that the buffers a command opens on
 ;; its own are set up like the ones the specs open.

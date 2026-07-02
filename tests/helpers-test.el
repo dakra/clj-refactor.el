@@ -26,8 +26,7 @@
   (it "sets the buffer up the way a user's is"
     (cljr-test-with-buffer ""
       (expect major-mode :to-be 'clojure-mode)
-      (expect clj-refactor-mode :to-be-truthy)
-      (expect yas-minor-mode :to-be-truthy)))
+      (expect clj-refactor-mode :to-be-truthy)))
 
   (it "leaves no buffer behind"
     (let ((buffers (buffer-list)))

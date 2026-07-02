@@ -426,9 +426,7 @@ ex/"))))
 
 (describe "the ns form commands CIDER has taken over"
   (it "are obsolete in favor of CIDER's"
-    (dolist (pair '((cljr-add-require-to-ns . cider-ns-add-require)
-                    (cljr-add-import-to-ns . cider-ns-add-import)
-                    (cljr-add-missing-libspec . cider-ns-add-missing)
+    (dolist (pair '((cljr-add-missing-libspec . cider-ns-add-missing)
                     (cljr-clean-ns . cider-ns-clean)))
       (expect (car (get (car pair) 'byte-obsolete-info)) :to-be (cdr pair)))
     (expect (car (get 'cljr-slash 'byte-obsolete-info)) :to-match "cider-ns-magic-requires")))

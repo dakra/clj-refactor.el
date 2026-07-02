@@ -84,12 +84,12 @@ Return the text of the buffer, with point marked if WITH-POINT."
 
 (map :key items)"))
 
-  (it "leaves point at the first parameter"
+  (it "leaves point in the body"
     (expect (cljr-test-create-fn "(defn some-fn []
   (foo |bar baz))"
                                  :with-point)
-            :to-equal "(defn- foo [|bar baz]
-  )
+            :to-equal "(defn- foo [bar baz]
+  |)
 
 (defn some-fn []
   (foo bar baz))"))
@@ -101,16 +101,12 @@ Return the text of the buffer, with point marked if WITH-POINT."
 
 (foo)"))
 
-  (it "lets the parameters and the body be filled in one after the other"
+  (it "lets the body be typed right away"
     (expect (cljr-test-refactor "(defn some-fn []
   (foo| 1 2))"
               (cljr-test-keys "C-! fe")
-              (cljr-test-type "one")
-              (cljr-test-keys "<tab>")
-              (cljr-test-type "two")
-              (cljr-test-keys "<tab>")
               (cljr-test-type "body"))
-            :to-equal "(defn- foo [one two]
+            :to-equal "(defn- foo [arg0 arg1]
   body)
 
 (defn some-fn []

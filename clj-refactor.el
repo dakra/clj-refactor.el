@@ -10,7 +10,7 @@
 ;; Version: 4.2.0
 ;; Keywords: convenience, clojure, cider
 
-;; Package-Requires: ((emacs "28.1") (yasnippet "0.6.1") (paredit "24") (clojure-mode "5.18.0") (cider "2.0.0") (parseedn "1.2.0") (transient "0.4.1") (spinner "1.7"))
+;; Package-Requires: ((emacs "28.1") (paredit "24") (clojure-mode "5.18.0") (cider "2.0.0") (parseedn "1.2.0") (transient "0.4.1") (spinner "1.7"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -33,7 +33,6 @@
 
 (require 'seq)
 
-(require 'yasnippet)
 (require 'paredit)
 (require 'clojure-mode)
 (require 'cider)
@@ -259,16 +258,9 @@ if it appears to be unused."
 
 (defvar clj-refactor-map (make-sparse-keymap))
 
-(defvar cljr--add-require-snippet
-  "${1:[${2:${3:} :as ${4:${3:$(cljr--ns-name yas-text)}}}]}"
-  "The snippet used in `cljr-add-require-to-ns'.")
-
 (defun cljr--ns-name (ns)
   "Return the last name in a full NS."
   (replace-regexp-in-string ".*\\." "" ns))
-
-(defvar cljr--add-use-snippet "[$1 :refer ${2:[$3]}]"
-  "The snippet used in `cljr-add-use-to-ns'.")
 
 (defvar *cljr--noninteractive* nil
   "t, when our interactive functions are called programmatically.")
@@ -615,12 +607,9 @@ That's when `cljr-magic-requires' is off, or CIDER's own magic requires
   (read-kbd-macro (concat prefix " " keys)))
 
 (defvar cljr--all-helpers
-  '(("ai" . (cljr-add-import-to-ns "Add import to ns" ?i ("ns")))
-    ("am" . (cljr-add-missing-libspec "Add missing libspec" ?m ("ns")))
+  '(("am" . (cljr-add-missing-libspec "Add missing libspec" ?m ("ns")))
     ("ap" . (cljr-add-project-dependency "Add project dependency" ?p ("ns" "project")))
-    ("ar" . (cljr-add-require-to-ns "Add require to ns" ?r ("ns")))
     ("as" . (cljr-add-stubs "Add stubs for the interface/protocol at point" ?s ("toplevel-form")))
-    ("au" . (cljr-add-use-to-ns "Add use to ns" ?U ("ns")))
     ("ci" . (clojure-cycle-if "Cycle if" ?I ("code")))
     ("cn" . (cljr-clean-ns "Clean ns" ?c ("ns")))
     ("cp" . (clojure-cycle-privacy "Cycle privacy" ?P ("toplevel-form")))
@@ -643,7 +632,6 @@ That's when `cljr-magic-requires' is off, or CIDER's own magic requires
     ("rd" . (cljr-reify-to-defrecord "Reify to defrecord" ?R ("toplevel-form")))
     ("rf" . (cljr-rename-file-or-dir "Rename file-or-dir" ?r ("project" "toplevel-form")))
     ("rl" . (cljr-remove-let "Remove let" ?r ("code")))
-    ("rm" . (cljr-require-macro "Add to or extend the require-macros form" ?M ("ns")))
     ("rs" . (cljr-rename-symbol "Rename symbol" ?s ("project" "code")))
     ("sc" . (cljr-show-changelog "Show the project's changelog" ?c ("cljr")))
     ("sp" . (cljr-sort-project-dependencies "Sort project dependencies" ?S ("project")))
@@ -736,12 +724,8 @@ The entries mirror the two-letter keybindings, so the menu doubles as a
 way to learn them.  The Options section toggles common settings for the
 current session."
   [["Namespace"
-    ("ai" "Add import to ns" cljr-add-import-to-ns)
     ("am" "Add missing libspec" cljr-add-missing-libspec)
-    ("ar" "Add require to ns" cljr-add-require-to-ns)
-    ("au" "Add use to ns" cljr-add-use-to-ns)
     ("cn" "Clean ns" cljr-clean-ns)
-    ("rm" "Require macro" cljr-require-macro)
     ("sr" "Stop referring" cljr-stop-referring)
     ("ap" "Add project dependency" cljr-add-project-dependency)]
    ["Code"
@@ -1103,9 +1087,7 @@ this takes over Emacs's notice, which it only gives once a session."
 ;; Not top-level `make-obsolete' forms, which the byte-compiler evaluates
 ;; too, recording the replacements as symbols with positions in the
 ;; Emacs that compiles them (e.g. the one installing the package).
-(dolist (obsolete '((cljr-add-require-to-ns . cider-ns-add-require)
-                    (cljr-add-import-to-ns . cider-ns-add-import)
-                    (cljr-add-missing-libspec . cider-ns-add-missing)
+(dolist (obsolete '((cljr-add-missing-libspec . cider-ns-add-missing)
                     (cljr-slash . "set `cider-ns-magic-requires' instead.")
                     (cljr-clean-ns . cider-ns-clean)))
   (make-obsolete (car obsolete) (cdr obsolete) "4.1.0"))
@@ -1543,23 +1525,6 @@ word test in it and whether the file lives under the test/ directory."
     (let ((*cljr--noninteractive* t))
       (cljr--clean-or-sort-ns))))
 
-(defvar cljr--tmp-marker (make-marker))
-
-(defun cljr--pop-tmp-marker-after-yasnippet-1 (&rest _)
-  (goto-char cljr--tmp-marker)
-  (set-marker cljr--tmp-marker nil)
-  (remove-hook 'yas-after-exit-snippet-hook
-               'cljr--pop-tmp-marker-after-yasnippet-1 :local))
-
-(defun cljr--pop-tmp-marker-after-yasnippet ()
-  (add-hook 'yas-after-exit-snippet-hook
-            'cljr--pop-tmp-marker-after-yasnippet-1 nil :local))
-
-(defun cljr--maybe-eval-ns-form-and-remove-hook ()
-  (cljr--maybe-eval-ns-form)
-  (remove-hook 'yas-after-exit-snippet-hook
-               'cljr--maybe-eval-ns-form-and-remove-hook :local))
-
 (defun cljr--sort-ns ()
   "Sort the ns form syntactically via `clojure-sort-ns'.
 `clojure-sort-ns' walks the form with `forward-sexp' assuming
@@ -1569,6 +1534,7 @@ default movement here."
   (let ((forward-sexp-function nil))
     (clojure-sort-ns)))
 
+
 (defun cljr--maybe-sort-ns ()
   (when cljr-auto-sort-ns
     (if (and (cider-connected-p) (cljr--op-supported-p "clean-ns"))
@@ -1577,68 +1543,6 @@ default movement here."
       ;; so this stays useful without a running REPL.
       (let ((inhibit-message t))
         (ignore-errors (cljr--sort-ns))))))
-
-(defun cljr--sort-and-remove-hook (&rest _)
-  (cljr--maybe-sort-ns)
-  (remove-hook 'yas-after-exit-snippet-hook
-               'cljr--sort-and-remove-hook :local))
-
-(defun cljr--add-yas-ns-updated-hook ()
-  (add-hook 'yas-after-exit-snippet-hook 'cljr--sort-and-remove-hook nil :local)
-  (add-hook 'yas-after-exit-snippet-hook
-            'cljr--maybe-eval-ns-form-and-remove-hook nil :local))
-
-(defun cljr--add-to-ns (type snippet &optional cljs?)
-  "Expand SNIPPET in the TYPE clause of the ns form.
-TYPE is :require, :import etc.  If CLJS? is non-nil, act on the cljs
-part of the ns declaration.  Point goes back to where it was once the
-snippet is done, or right away if there's no place for the snippet."
-  ;; The marker all buffers share may be waiting on a snippet elsewhere,
-  ;; so it's left alone until there's a snippet to expand here.
-  (let ((origin (point-marker)))
-    (condition-case err
-        (cljr--insert-in-ns type cljs?)
-      (error
-       (goto-char origin)
-       (set-marker origin nil)
-       (signal (car err) (cdr err))))
-    (set-marker cljr--tmp-marker origin)
-    (set-marker origin nil))
-  (cljr--pop-tmp-marker-after-yasnippet)
-  (cljr--add-yas-ns-updated-hook)
-  (yas-expand-snippet snippet))
-
-;;;###autoload
-(defun cljr-add-require-to-ns (cljs?)
-  "Add a require statement to the ns form in current buffer.
-
-With a prefix act on the cljs part of the ns declaration.
-
-See: https://github.com/clojure-emacs/clj-refactor.el/wiki/cljr-add-require-to-ns"
-  (interactive "P")
-  (cljr--obsolete-notice 'cljr-add-require-to-ns)
-  (cljr--add-to-ns ":require" cljr--add-require-snippet cljs?))
-
-;;;###autoload
-(defun cljr-add-use-to-ns (cljs?)
-  "Add a use statement to the buffer's ns form.
-
-With a prefix act on the cljs part of the ns declaration.
-
-See: https://github.com/clojure-emacs/clj-refactor.el/wiki/cljr-add-use-to-ns"
-  (interactive "P")
-  (cljr--add-to-ns ":require" cljr--add-use-snippet cljs?))
-
-;;;###autoload
-(defun cljr-add-import-to-ns (&optional cljs?)
-  "Add an import statement to the buffer's ns form.
-
-With a prefix act on the cljs part of the ns declaration.
-
-See: https://github.com/clojure-emacs/clj-refactor.el/wiki/cljr-add-import-to-ns"
-  (interactive "P")
-  (cljr--obsolete-notice 'cljr-add-import-to-ns)
-  (cljr--add-to-ns ":import" "$1" cljs?))
 
 (defun cljr--extract-refer-all-namespaces ()
   "Returns a list of all the namespaces that are required with :refer :all"
@@ -1670,14 +1574,6 @@ See: https://github.com/clojure-emacs/clj-refactor.el/wiki/cljr-add-import-to-ns
              nses)
             (paredit-forward-up)))
         (nreverse nses)))))
-
-;;;###autoload
-(defun cljr-require-macro ()
-  "Add a require statement for a macro to the ns form in current buffer.
-
-See: https://github.com/clojure-emacs/clj-refactor.el/wiki/cljr-require-macro"
-  (interactive)
-  (cljr--add-to-ns ":require-macros" cljr--add-require-snippet))
 
 ;;;###autoload
 (defun cljr-stop-referring ()
@@ -4571,19 +4467,20 @@ so we can ignore them when trying to figure out a name for a parameter."
 If PATH is non-nil append the new function to the end of the file
 at PATH."
   (let* ((params (lambda (word i)
-                   (format "${%s:%s}" (+ i 1)
-                           (or (and word (cljr--guess-param-name word))
-                               (format "arg%s" i)))))
+                   (or (and word (cljr--guess-param-name word))
+                       (format "arg%s" i))))
          (stub (concat (cljr--defn-str path)
                        (if path (cljr--symbol-suffix name) name)
                        " ["
                        (string-join (seq-map-indexed params args)  " ")
-                       "]\n$0)")))
+                       "]\n  )")))
     (when path
       (find-file-other-window path)
       (goto-char (point-max)))
     (cljr--make-room-for-toplevel-form)
-    (yas-expand-snippet stub)))
+    (insert stub)
+    ;; Leave point on the empty function body, ready for the definition.
+    (backward-char)))
 
 ;;;###autoload
 (defun cljr-describe-refactoring (cljr-fn)
