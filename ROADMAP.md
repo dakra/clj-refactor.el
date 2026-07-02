@@ -70,9 +70,9 @@ deprecate the clj-refactor copies. `cljr-slash`, `add-missing-libspec`, and
 `clean-ns` are the first targets - none of them need the AST index, so they can
 move without dragging the slow analyzer along.
 
-The idiosyncratic, dependency-heavy parts (yasnippet snippets, hydras,
-multiple-cursors integration) stay in clj-refactor.el. They don't belong in
-CIDER core.
+The idiosyncratic, dependency-heavy integrations (the yasnippet snippets, the
+hydra menus and the multiple-cursors support) have since been dropped; anything
+similarly niche stays in clj-refactor.el rather than moving into CIDER core.
 
 ### Make the analysis fast and robust
 
